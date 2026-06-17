@@ -1,13 +1,13 @@
 # LatentRiskBenchmark
 
 Self-contained, runnable copy of the WM-Defense / latent-risk agent-defense benchmark,
-bundled together with the minimal SafePred core it depends on.
+bundled together with the minimal latentriskbench core it depends on.
 
 ## Layout
 
 ```
 LatentRiskBenchmark/
-└── SafePred/                         # minimal SafePred core (the benchmark imports this)
+└── latentriskbench/                         # minimal latentriskbench core (the benchmark imports this)
     ├── __init__.py, wrapper.py       # SafePredWrapper entry point
     ├── core/ models/ agent/          # world model, SafeAgent, trajectory graph
     ├── config/ adapters/ utils/      # config, benchmark adapters, llm_client/logger
@@ -22,14 +22,14 @@ LatentRiskBenchmark/
             └── data/                 # benchmark INPUTS only (see below)
 ```
 
-> The `SafePred/benchmark/wm-defense-benchmark/` nesting is kept intentionally:
+> The `latentriskbench/benchmark/wm-defense-benchmark/` nesting is kept intentionally:
 > the runner resolves the package root via fixed `Path(__file__).parents[N]` offsets,
 > so this depth lets it run with **zero code changes**.
 
 ## What's included vs. excluded
 
 **Included** — everything needed to run the benchmark:
-- Full benchmark code + the SafePred core modules it imports.
+- Full benchmark code + the latentriskbench core modules it imports.
 - Benchmark **input** data: `tasks*.jsonl`, `base_tasks.jsonl`, `policies.json`,
   `tool_registry.json`, and all `attack_payloads/`.
 
@@ -43,11 +43,11 @@ LatentRiskBenchmark/
 
 ```bash
 cd LatentRiskBenchmark
-pip install -r SafePred/requirements.txt          # numpy, requests, pyyaml, + LLM client deps
+pip install -r latentriskbench/requirements.txt          # numpy, requests, pyyaml, + LLM client deps
 # LLM API key/URL are read from a .env in the benchmark dir (see config.yaml)
 
-cd SafePred/benchmark/wm-defense-benchmark
-export PYTHONPATH="$(cd ../../.. && pwd)"          # so `import SafePred` resolves
+cd latentriskbench/benchmark/wm-defense-benchmark
+export PYTHONPATH="$(cd ../../.. && pwd)"          # so `import latentriskbench` resolves
 
 python list_registry.py                            # list registered attacks/defenses/agents
 python validate_all_data.py                        # validate all input data
@@ -58,7 +58,7 @@ python run.py --defense-mode world_model --max-tasks 5
 
 New top-down pipeline for building genuinely *state-conditioned* risk items (risk that is
 invisible in the action surface and only emerges after aggregating the committed prefix into
-state). All paths under `SafePred/benchmark/wm-defense-benchmark/`:
+state). All paths under `latentriskbench/benchmark/wm-defense-benchmark/`:
 
 - `schemas/state_schema.py` — structured trajectory-state schema (the 4 SC mechanisms),
   `STATE_ONLY_PATHS` (legal injection sites), `canonical_state()` (path-invariance equality).
@@ -72,7 +72,7 @@ state). All paths under `SafePred/benchmark/wm-defense-benchmark/`:
 Build + certify the SC suite (no API needed):
 
 ```bash
-cd SafePred/benchmark/wm-defense-benchmark
+cd latentriskbench/benchmark/wm-defense-benchmark
 python tools/struct_oracle_demo.py        # schema + oracle smoke test
 python tools/build_sc_suite.py            # -> data/tasks_sc.jsonl (risky + matched twins)
 ```
@@ -83,4 +83,4 @@ Diagnostic (needs an LLM backend — supports OpenRouter via `--api-url/--api-ke
 python tools/exclusion_battery.py --dry-run    # inspect the two views without API calls
 ```
 
-See `SafePred/benchmark/wm-defense-benchmark/README.md` for full benchmark documentation.
+See `latentriskbench/benchmark/wm-defense-benchmark/README.md` for full benchmark documentation.
