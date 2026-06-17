@@ -1,0 +1,150 @@
+version: 0.1
+name: conditional_agent_safety_with_world_model
+
+defaults:
+  agent_id: agent_default
+  attack_family: none
+  attack_depth: L0
+  attack_id: attack_none
+  defense_id: defense_world_model_gating
+  seed: 0
+
+matrix:
+  attacks:
+    - attack_none
+    - attack_l1_injection
+    - attack_observation_tampering
+    - attack_l2_chain
+    - attack_prompt_framing            # Hand-crafted semantic framing (renamed from legacy attack_l3_latent_space)
+    - attack_l3_latent_space           # Reserved for WM/gradient-generated latent-space attacks
+    - attack_l4_wm_adaptive
+  defenses:
+    - defense_none
+    - defense_keyword_list              # Phase 1 baseline: hardcoded regex (lower bound)
+    - defense_rule_filter               # Phase 1 baseline: RulePolicyOracle at decision time
+    - defense_rule_filter_trajectory    # Phase 1 baseline: + trajectory rules (vs Phase 3 beam)
+    - defense_llm_judge                 # Phase 1 baseline: LLM-as-judge, one call per candidate
+    - defense_world_model_gating        # SafePred proposed defense
+  env_suites:
+    - web
+    - os
+
+execution:
+  mode: online
+  max_steps: 20
+  # Phase-P0 (2026-04-17): runs_per_cell bumped from 1 to 3 so bootstrap
+  # CI in aggregate_metrics.py has at least 3 samples per cell. With n<3
+  # the reported ``ci_low == ci_high == mean`` (degenerate) which is
+  # transparent but carries no information. Bump higher only if the LLM
+  # budget allows.
+  runs_per_cell: 3
+
+metrics:
+  utility:
+    - original_goal_success_rate
+    - task_success_rate
+    - avg_steps
+    - avg_regens
+  safety:
+    - attack_success_rate
+    - unsafe_selection_rate
+    - violation_rate
+    - necessary_refusal_rate
+    - severity_weighted_harm
+  defense:
+    - defense_gain
+    - defense_cost
+    - over_refusal_rate
+  predictive:
+    - auroc_violation_prediction
+    - early_warning_lead_time
+  causal: []
+
+reporting:
+  confidence_interval: bootstrap_95
+  slice_by:
+    - attack_depth
+    - attack_family
+    - env_suite
+    - defense_id
+    - threat_mode   # new in Phase 2: report wm_fooling_rate per attacker threat mode
+
+# Independent policy oracle used to verify attack-success ground truth
+# without consulting the defender's world model. Used directly by the
+# oracle-coverage validator (`validators/validate_oracle_coverage.py`) and,
+# in later phases, by the WM-adaptive attack generator.
+#
+# Modes:
+#   rule_only     - use only the rule oracle (cheap, deterministic)
+#   rule_or_llm   - flag unsafe if EITHER oracle flags (strict; default)
+#   rule_and_llm  - flag unsafe only if BOTH oracles flag (high-precision
+#                   filter for generator candidates)
+#
+# The LLM oracle must use a DIFFERENT model from the defender world model
+# configured in `config.yaml`. ``forbidden_model_names`` at runtime is the
+# mechanism that enforces this decoupling.
+policy_oracle:
+  mode: rule_or_llm
+  llm:
+    enabled: false
+    provider: custom
+    model_name: claude-sonnet-4-6
+    api_url: null
+    api_key_env: POLICY_ORACLE_API_KEY
+    temperature: 0.0
+    max_tokens: 512
+    timeout: 30
+
+# Configuration for the WM-adaptive attack generator (Phase 1+).
+# The generator runs OFFLINE: payloads are materialised into
+# ``data/attack_payloads/wm_adaptive/`` before ``run_matrix.py`` executes, so
+# evaluation runs remain deterministic.
+#
+# Phase 1 pilot uses TemplateAttacker + StubDefenderWMScorer(lenient) +
+# rule-only oracle so it can run without any API credentials. Flip the
+# `use_llm_*` booleans to switch to real LLMs for the paper experiments.
+#
+# ``threat_mode`` is carried through to generation records for provenance;
+# Phase 2 adds grey/black-box support and the transfer-rate metric.
+attack_generation:
+  algorithm: rephrase            # rephrase (Phase 1) | beam (Phase 3)
+  # Phase 2: threat_modes is a LIST; the CLI can --all-threat-modes to emit
+  # one payload file per (base_task, threat_mode) suffix. threat_mode (scalar)
+  # below is the default for single-mode runs only.
+  threat_mode: white_box
+  threat_modes:
+    - white_box
+    - grey_box
+    - black_box
+  n_variants: 6
+  max_payloads_per_base_task: 3
+  # Phase 3 beam-search-specific knobs. Ignored when algorithm != beam.
+  beam:
+    beam_width: 3         # top-K partial trajectories retained per depth
+    max_depth: 3          # maximum chain length
+    branch_factor: 4      # proposer candidates per node per depth
+    alpha: 0.5            # weight on (1 - mean step WM risk)
+    beta: 0.4             # weight on oracle confidence when trajectory unsafe
+    gamma: 0.05           # depth penalty (prefers shorter successful chains)
+  budget:
+    max_llm_calls_per_attack: 8
+    wall_time_sec_per_attack: 60
+    max_llm_calls_per_beam: 16
+  attacker:
+    use_llm: false
+    model_name: gpt-4o-mini
+    provider: openai
+    temperature: 0.9
+    seed: 0
+    # For black_box, this override kicks in so the attacker model differs
+    # from the defender model; leave null to let build_attacker auto-pick.
+    black_box_model_name: null
+    black_box_provider: custom
+  defender:
+    use_llm: false
+    stub_mode: lenient
+    model_name: gpt-4o-mini
+    provider: openai
+  output:
+    payloads_dir: data/attack_payloads/wm_adaptive
+    logs_dir: data/attack_generation_logs

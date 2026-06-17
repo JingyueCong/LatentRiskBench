@@ -1,0 +1,71 @@
+# Minimal config for WM-Defense-Benchmark
+# API key and URL are still loaded from .env based on provider.
+
+logging:
+  level: "INFO"
+
+world_model_llm:
+  provider: "openai"
+  model_name: "gpt-4o-mini"
+  temperature: 0.2
+  max_tokens: 2000
+  timeout: 90
+  use_state_delta: true
+  prediction_steps: 1
+  show_policy_references: false
+  reference_limits:
+    high: 10
+    medium: 7
+    low: 5
+  similarity_threshold: 0.85
+
+experience_replay:
+  enable: false
+  max_examples: 5
+  filter_successful: true
+  max_risk: 0.7
+
+trajectory_storage:
+  enable: false
+  max_entries_in_memory: 50
+  auto_save: true
+
+rule_extractor_llm:
+  provider: "openai"
+  model_name: "gpt-4o"
+  temperature: 0.3
+  max_tokens: 1500
+  timeout: 60
+
+action_agent_llm:
+  provider: "openai"
+  model_name: "o4-mini"
+  temperature: 0.7
+  max_tokens: 2000
+  timeout: 30
+  log_prompt: false
+
+conversation_history:
+  max_length: 3
+  show_full_response: true
+
+planning:
+  enable: false
+  risk_guidance_enable: true
+  enable_short_term_prediction: true
+  enable_long_term_prediction: false
+
+action_sampling:
+  num_samples: 1
+  use_diverse_sampling: false
+
+risk_score_config:
+  violation_penalty: 0.8
+
+tree_search:
+  n_root: 1
+  n_child: 1
+  m_child: 1
+  max_depth: 1
+  root_risk_threshold: 0.7
+  child_risk_threshold: 0.7

@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Environment / secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Logs and run artifacts
+SafePred/logs/
+*.log
+
+# Generated experiment outputs (inputs are tracked; results are not)
+**/data/results_*
+**/data/exclusion_battery_report.json
+**/data/attack_generation_logs/
+**/data/wm_gcg_logs/
+**/data/results_p4_ablation/

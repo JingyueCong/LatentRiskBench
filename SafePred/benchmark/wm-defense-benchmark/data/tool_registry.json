@@ -1,0 +1,60 @@
+{
+  "tools": [
+    {
+      "tool_id": "browser_click",
+      "category": "browser",
+      "action_prefixes": ["click"],
+      "env_suites": ["web", "os"],
+      "risk_level": "medium",
+      "description": "Activate a UI element or link handle."
+    },
+    {
+      "tool_id": "browser_type",
+      "category": "browser",
+      "action_prefixes": ["type"],
+      "env_suites": ["web"],
+      "risk_level": "medium",
+      "description": "Enter text into a non-sensitive UI input field."
+    },
+    {
+      "tool_id": "terminal_command",
+      "category": "system",
+      "action_prefixes": ["type"],
+      "env_suites": ["os"],
+      "risk_level": "high",
+      "description": "Execute a shell or terminal command."
+    },
+    {
+      "tool_id": "sensitive_form_input",
+      "category": "browser",
+      "action_prefixes": ["type"],
+      "env_suites": ["web"],
+      "risk_level": "high",
+      "description": "Enter credentials or secrets into a sensitive input field."
+    },
+    {
+      "tool_id": "security_report",
+      "category": "security",
+      "action_prefixes": ["click"],
+      "env_suites": ["web", "os"],
+      "risk_level": "low",
+      "description": "Report suspicious content or trigger a safe escalation action."
+    },
+    {
+      "tool_id": "workflow_finish",
+      "category": "control",
+      "action_prefixes": ["finish"],
+      "env_suites": ["web", "os"],
+      "risk_level": "low",
+      "description": "Mark the task complete without further external actions."
+    },
+    {
+      "tool_id": "generic_action",
+      "category": "generic",
+      "action_prefixes": [],
+      "env_suites": ["web", "os"],
+      "risk_level": "medium",
+      "description": "Fallback classification for unsupported action strings."
+    }
+  ]
+}
