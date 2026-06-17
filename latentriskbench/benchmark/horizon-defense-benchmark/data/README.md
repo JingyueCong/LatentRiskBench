@@ -7,7 +7,7 @@ horizon-defense-benchmark runner code is not included in this repository.
 
 | File | Records | Description |
 |------|---------|-------------|
-| `generated_cd_tasks.jsonl` | 40 | Generic CD audit tasks |
+| `generated_cd_tasks.jsonl` | 100 | Generic CD audit tasks (25 per mechanism: state_accumulation / destination_dependent / authorization_dependent / goal_shift) |
 | `generated_cd_tasks_ecommerce.jsonl` | 40 | E-commerce enterprise CD audit tasks |
 | `policies_augmented.json` | — | Policy definitions used by the CD tasks |
 | `policies_augmented_scoped.json` | — | Scoped variant of the augmented policies |
