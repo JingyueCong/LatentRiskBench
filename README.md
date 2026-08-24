@@ -1,86 +1,60 @@
-# LatentRiskBenchmark
+# LatentRiskBench
 
-Self-contained, runnable copy of the WM-Defense / latent-risk agent-defense benchmark,
-bundled together with the minimal latentriskbench core it depends on.
+LatentRiskBench is a reproducible benchmark and tooling stack for evaluating state-dependent residual risk in enterprise agents. This repository packages the benchmark harness, the minimal `latentriskbench` core it depends on, and the assets needed to run the paper's controlled and e-commerce instantiations.
 
-## Layout
+## Repository Overview
 
-```
-LatentRiskBenchmark/
-└── latentriskbench/                         # minimal latentriskbench core (the benchmark imports this)
-    ├── __init__.py, wrapper.py       # SafePredWrapper entry point
-    ├── core/ models/ agent/          # world model, SafeAgent, trajectory graph
-    ├── config/ adapters/ utils/      # config, benchmark adapters, llm_client/logger
-    ├── setup.py, requirements.txt
-    └── benchmark/
-        └── wm-defense-benchmark/     # the benchmark itself
-            ├── runners/              # run.py, run_matrix.py
-            ├── attacks/ defenses/    # attack & defense handlers
-            ├── agents/ metrics/      # planner agents, outcome/world-model metrics
-            ├── attack_generator/     # compositional / adaptive attack generation
-            ├── schemas/ tooling/ tools/ validators/ policy_oracle/
-            └── data/                 # benchmark INPUTS only (see below)
-```
+The main benchmark lives under `latentriskbench/benchmark/wm-defense-benchmark/`. That directory contains the runner, attacks, defenses, metrics, validators, schemas, and task data used by the paper.
 
-> The `latentriskbench/benchmark/wm-defense-benchmark/` nesting is kept intentionally:
-> the runner resolves the package root via fixed `Path(__file__).parents[N]` offsets,
-> so this depth lets it run with **zero code changes**.
+The nested path is intentional: the benchmark runner resolves the package root through fixed relative offsets, so the current structure keeps the code runnable without modification.
 
-## What's included vs. excluded
+## What Is Included
 
-**Included** — everything needed to run the benchmark:
-- Full benchmark code + the latentriskbench core modules it imports.
-- Benchmark **input** data: `tasks*.jsonl`, `base_tasks.jsonl`, `policies.json`,
-  `tool_registry.json`, and all `attack_payloads/`.
+- Benchmark code and the minimal core modules it imports.
+- Input data for the benchmark: `tasks*.jsonl`, `base_tasks.jsonl`, `policies.json`, `tool_registry.json`, and `attack_payloads/`.
+- Construction tooling for the state-conditioned suite and its matched benign twins.
 
-**Excluded** — experiment outputs and dev cruft (not needed to reproduce a run):
-- `data/results_*.{json,csv}`, `data/attack_generation_logs/`, `data/wm_gcg_logs/`,
-  `data/results_p4_ablation/`
-- SafePred `logs/`, `tests/`, all `__pycache__/`, and sibling benchmarks
-  (`horizon-defense-benchmark`, `worldmodel`).
+## What Is Excluded
 
-## Setup & run
+- Generated outputs such as `results*.json`, `results*.csv`, and attack-generation logs.
+- Local runtime noise such as `__pycache__/`, notebook checkpoints, `.env` files, and editor settings.
+- Sibling benchmark folders that are not part of this release snapshot.
+
+## Quick Start
 
 ```bash
-cd LatentRiskBenchmark
-pip install -r latentriskbench/requirements.txt          # numpy, requests, pyyaml, + LLM client deps
-# LLM API key/URL are read from a .env in the benchmark dir (see config.yaml)
+cd LatentRiskBench
+pip install -r latentriskbench/requirements.txt
 
 cd latentriskbench/benchmark/wm-defense-benchmark
-export PYTHONPATH="$(cd ../../.. && pwd)"          # so `import latentriskbench` resolves
+export PYTHONPATH="$(cd ../../.. && pwd)"
 
-python list_registry.py                            # list registered attacks/defenses/agents
-python validate_all_data.py                        # validate all input data
+python list_registry.py
+python validate_all_data.py
 python run.py --defense-mode world_model --max-tasks 5
 ```
 
-## State-conditioned (SC) construction tooling
+## State-Conditioned Suite
 
-New top-down pipeline for building genuinely *state-conditioned* risk items (risk that is
-invisible in the action surface and only emerges after aggregating the committed prefix into
-state). All paths under `latentriskbench/benchmark/wm-defense-benchmark/`:
+The repository includes a state-conditioned construction pipeline for cases where the decisive risk signal is not visible from the terminal action alone. The relevant tooling lives in the benchmark package:
 
-- `schemas/state_schema.py` — structured trajectory-state schema (the 4 SC mechanisms),
-  `STATE_ONLY_PATHS` (legal injection sites), `canonical_state()` (path-invariance equality).
-- `policy_oracle/struct_oracle.py` — `StructPolicyOracle` (`struct_v1`): machine-checkable
-  conditions for P000–P004 over the structured state. `data/policies.json` carries the matching
-  human-readable `state_condition` per policy.
-- `attack_generator/sc_injector.py` — deterministic reconstruction `R` + the injector that flips
-  one state-only field while holding the terminal action fixed; certifies pairs by construction.
-- `data/sc_seeds.jsonl` — benign multi-step seed workflows and their leverage targets.
+- `schemas/state_schema.py` for the structured trajectory-state schema.
+- `policy_oracle/struct_oracle.py` for machine-checkable policy conditions over state.
+- `attack_generator/sc_injector.py` for deterministic state-only perturbations with fixed terminal actions.
+- `data/sc_seeds.jsonl` for benign multi-step seed workflows.
 
-Build + certify the SC suite (no API needed):
+To build and certify the state-conditioned suite locally:
 
 ```bash
 cd latentriskbench/benchmark/wm-defense-benchmark
-python tools/struct_oracle_demo.py        # schema + oracle smoke test
-python tools/build_sc_suite.py            # -> data/tasks_sc.jsonl (risky + matched twins)
+python tools/struct_oracle_demo.py
+python tools/build_sc_suite.py
 ```
 
-Diagnostic (needs an LLM backend — supports OpenRouter via `--api-url/--api-key`):
+## Documentation
 
-```bash
-python tools/exclusion_battery.py --dry-run    # inspect the two views without API calls
-```
+For the full benchmark specification, see [latentriskbench/benchmark/wm-defense-benchmark/README.md](latentriskbench/benchmark/wm-defense-benchmark/README.md).
 
-See `latentriskbench/benchmark/wm-defense-benchmark/README.md` for full benchmark documentation.
+## Citation
+
+If you use this repository in your work, please cite the paper associated with LatentRiskBench.
