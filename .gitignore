@@ -14,6 +14,10 @@ __pycache__/
 # Logs and run artifacts
 SafePred/logs/
 *.log
+**/results.json
+**/results_*.json
+**/results_*.csv
+**/results_transfer_matrix.*
 
 # Generated experiment outputs (inputs are tracked; results are not)
 **/data/results_*
