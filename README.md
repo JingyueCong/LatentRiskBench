@@ -1,5 +1,7 @@
 # LatentRiskBench
 
+[![Hugging Face Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Dataset-LatentRiskBench-yellow)](https://huggingface.co/datasets/Echo0623/LatentRiskBench)
+
 LatentRiskBench is a reproducible benchmark and tooling stack for evaluating state-dependent residual risk in enterprise agents. This repository packages the benchmark harness, the minimal `latentriskbench` core it depends on, and the assets needed to run the paper's controlled and e-commerce instantiations.
 
 ## Repository Overview
